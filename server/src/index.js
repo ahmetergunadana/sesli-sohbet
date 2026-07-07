@@ -17,7 +17,9 @@ const server = createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: '*', // Tüm cihazlardan erişime izin ver (geliştirme ortamı)
+    origin: process.env.NODE_ENV === 'production'
+      ? [process.env.CLIENT_URL, 'https://client-eight-teal-60.vercel.app']
+      : '*',
     methods: ['GET', 'POST'],
   },
 });
@@ -94,6 +96,13 @@ async function start() {
     server.listen(PORT, '0.0.0.0', () => {
       console.log(`Server running on port ${PORT}`);
     });
+
+    // Keep Render free tier alive (ping every 10 min)
+    if (process.env.NODE_ENV === 'production') {
+      setInterval(() => {
+        fetch(`http://localhost:${PORT}/api/health`).catch(() => {});
+      }, 10 * 60 * 1000);
+    }
   } catch (error) {
     console.error('Failed to start server:', error);
     process.exit(1);
