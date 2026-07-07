@@ -1,0 +1,45 @@
+services:
+  - type: web
+    name: sesli-sohbet-client
+    runtime: static
+    buildCommand: cd client && npm install && npm run build
+    staticPublishPath: client/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://sesli-sohbet-api.onrender.com
+      - key: VITE_WS_URL
+        value: https://sesli-sohbet-api.onrender.com
+
+  - type: web
+    name: sesli-sohbet-api
+    runtime: node
+    buildCommand: cd server && npm install
+    startCommand: node src/index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: sesli-sohbet-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: sesli-sohbet-redis
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CLIENT_URL
+        value: https://sesli-sohbet-client.onrender.com
+      - key: PORT
+        value: 10000
+
+  - type: redis
+    name: sesli-sohbet-redis
+    ipAllowList: []
+    plan: free
+
+  - type: postgresql
+    name: sesli-sohbet-db
+    databaseName: sesli_sohbet
+    ipAllowList: []
+    plan: free
